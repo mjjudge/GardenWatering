@@ -1,0 +1,24 @@
+# A7 — Reset Daily Watering Flags (Midnight)
+# ---------------------------------------------------------------------------
+# Resets both run-tracking input_booleans to 'off' at midnight so that
+# each new day begins with both watering windows available.
+# ---------------------------------------------------------------------------
+
+- id: a7_reset_watering_flags
+  alias: "A7 — Reset Daily Watering Flags at Midnight"
+  description: >
+    Reset input_boolean.garden_watered_morning and
+    input_boolean.garden_watered_evening at 00:00 each day.
+
+  trigger:
+    - platform: time
+      at: "00:00:00"
+
+  action:
+    - service: input_boolean.turn_off
+      target:
+        entity_id:
+          - input_boolean.garden_watered_morning
+          - input_boolean.garden_watered_evening
+
+  mode: single

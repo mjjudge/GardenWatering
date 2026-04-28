@@ -1,0 +1,33 @@
+# A6 — Sensor Failure Notification
+# ---------------------------------------------------------------------------
+# Continuously monitors the soil moisture sensor.  Fires a mobile
+# notification as soon as the sensor becomes unavailable or its last update
+# is more than 6 hours old.
+#
+# Note: A3 / A4 handle the actual fallback watering; this automation is
+# purely informational so the user can investigate the sensor issue.
+# ---------------------------------------------------------------------------
+
+- id: a6_sensor_failure_notification
+  alias: "A6 — Soil Sensor Failure Notification"
+  description: >
+    Send a mobile notification when the soil moisture sensor is
+    unavailable or has not reported for more than 6 hours.
+
+  trigger:
+    - platform: template
+      value_template: >
+        {% set s = states.sensor.soil_sensor_soil_moisture %}
+        {{ s is none
+           or s.state in ['unknown', 'unavailable', 'none']
+           or (now() - s.last_updated).total_seconds() > 21600 }}
+
+  action:
+    # Replace notify.notify with your device-specific service, e.g.
+    # notify.mobile_app_<your_device_id>, if you want a push notification.
+    - service: notify.notify
+      data:
+        message: >
+          ⚠️ Soil sensor unavailable or stale — fallback watering active
+
+  mode: single
