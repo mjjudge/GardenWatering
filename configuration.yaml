@@ -16,13 +16,11 @@
 input_boolean: !include input_boolean.yaml
 
 # ---------------------------------------------------------------------------
-# Automations — each file covers one automation
+# Automations — single-file list
 # ---------------------------------------------------------------------------
 # If you do not already have an automation: section, add this line as-is.
-# If you already have automation: !include_dir_merge_list automations/,
-# just copy the automation YAML files — no change here is needed.
-# If you have an inline automation: list, convert it to use
-# !include_dir_merge_list automations/ and move your existing automations
-# into separate files in that directory first.
+# If you already have automation: !include automations.yaml,
+# just merge your existing automations and the repo automations into one file.
+# Only one automation: key should exist in configuration.yaml.
 # ---------------------------------------------------------------------------
-automation: !include_dir_merge_list automations/
+automation: !include automations.yaml

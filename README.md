@@ -32,17 +32,10 @@ Using either **Samba / SFTP**, **File Editor** add-on, or **Studio Code Server**
 ```
 /config/                          ← your existing HA config root
 ├── input_boolean.yaml            ← copy from this repo
-└── automations/                  ← copy the entire folder from this repo
-    ├── a1_morning_watering.yaml
-    ├── a2_evening_watering.yaml
-    ├── a3_morning_fallback.yaml
-    ├── a4_evening_fallback.yaml
-    ├── a5_safety_shutoff.yaml
-    ├── a6_sensor_failure_notification.yaml
-    └── a7_reset_watering_flags.yaml
+└── automations.yaml              ← copy from this repo
 ```
 
-> If you already have an `automations/` folder, copy the files **into** it — do not replace the folder.
+> If you already have an `automations.yaml`, merge your existing automations with this repo's automations into a single list in that same file.
 
 ### Step 2 — Update configuration.yaml
 
@@ -54,19 +47,19 @@ Open `/config/configuration.yaml` and add the two sections below. **Do not paste
 input_boolean: !include input_boolean.yaml
 
 # Add if automation: is not already present.
-# If you already use !include_dir_merge_list automations/ then just
-# copying the files in Step 1 is all that is needed here.
-automation: !include_dir_merge_list automations/
+# If you already use !include automations.yaml then merge the contents
+# of this repo's automations.yaml into your existing one.
+automation: !include automations.yaml
 ```
 
-> **Existing automation list?** If your `configuration.yaml` has an inline `automation:` list, convert it to `!include_dir_merge_list automations/` and save each existing automation as a separate YAML file in `automations/` first.
+> **Existing inline automation list?** If your `configuration.yaml` has an inline `automation:` list, move that list into `automations.yaml` and set `automation: !include automations.yaml`.
 
 ### Step 3 — Set your notification service
 
 Automations A3, A4, and A6 use `notify.notify`. To receive push notifications on your phone, replace this with your Companion App service:
 
 1. In HA go to **Settings → Devices & Services → Companion App** and note your device name (e.g. `marcus_phone`).
-2. In each of `a3_morning_fallback.yaml`, `a4_evening_fallback.yaml`, and `a6_sensor_failure_notification.yaml`, change:
+2. In `automations.yaml`, replace each occurrence of:
    ```yaml
    - action: notify.notify
    ```
@@ -87,7 +80,7 @@ Check that the entity IDs in the table below match what your devices report in H
 | `sensor.soil_sensor_battery` | Soil sensor battery level |
 | `weather.home` | Met.no forecast provider |
 
-If any entity ID differs, do a find-and-replace across the `automations/` folder.
+If any entity ID differs, do a find-and-replace in `automations.yaml`.
 
 ### Step 5 — Reload / Restart
 
@@ -105,14 +98,7 @@ After saving all files:
 .
 ├── configuration.yaml          # Reference — shows what to add to your existing config
 ├── input_boolean.yaml          # Run-tracking helpers (morning / evening flags)
-└── automations/
-    ├── a1_morning_watering.yaml             # Soil-based watering at 06:00
-    ├── a2_evening_watering.yaml             # Soil-based watering at 20:00
-    ├── a3_morning_fallback.yaml             # Fallback watering at 06:00 (sensor failure)
-    ├── a4_evening_fallback.yaml             # Fallback watering at 20:00 (sensor failure)
-    ├── a5_safety_shutoff.yaml               # Hard safety shutoff watchdog
-    ├── a6_sensor_failure_notification.yaml  # Mobile alert when sensor is unavailable
-    └── a7_reset_watering_flags.yaml         # Midnight reset of daily run-tracking flags
+└── automations.yaml           # All automations in one YAML list
 ```
 
 ---
@@ -214,12 +200,10 @@ This catches stuck valves, HA restarts mid-run, and manual activation.
 
 ## Installation
 
-1. Copy `configuration.yaml` and `input_boolean.yaml` into your HA config directory.
-2. Copy the entire `automations/` directory into your HA config directory.
-3. Reload automations in HA (Developer Tools → YAML → Automations) or restart HA.
+1. Copy `configuration.yaml`, `input_boolean.yaml`, and `automations.yaml` into your HA config directory.
+2. Reload automations in HA (Developer Tools → YAML → Automations) or restart HA.
 
-> If you already use an `automation:` key in `configuration.yaml`, merge the
-> `!include_dir_merge_list automations/` directive with your existing setup.
+> If you already use an `automation:` key in `configuration.yaml`, keep only one key and point it to `!include automations.yaml`.
 
 ### Customising the notification service
 
