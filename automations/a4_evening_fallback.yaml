@@ -24,52 +24,49 @@
            or s.state in ['unknown', 'unavailable', 'none']
            or (now() - s.last_updated).total_seconds() > 21600 }}
 
-    # 2. No rain forecast for today (index 0)
-    - condition: template
-      value_template: >
-        {% set forecast = state_attr('weather.home', 'forecast') %}
-        {% if forecast is none or forecast | length < 1 %}
-          false
-        {% else %}
-          {{ forecast[0].condition not in ['rainy', 'pouring', 'lightning-rainy'] }}
-        {% endif %}
-
-    # 3. No rain forecast for tomorrow (index 1)
-    - condition: template
-      value_template: >
-        {% set forecast = state_attr('weather.home', 'forecast') %}
-        {% if forecast is none or forecast | length < 2 %}
-          false
-        {% else %}
-          {{ forecast[1].condition not in ['rainy', 'pouring', 'lightning-rainy'] }}
-        {% endif %}
-
-    # 4. Water timer battery is above minimum
+    # 2. Water timer battery is above minimum
     - condition: numeric_state
       entity_id: sensor.water_timer_battery
       above: 20
 
-    # 5. Evening window has not already been used today
+    # 3. Evening window has not already been used today
     - condition: state
       entity_id: input_boolean.garden_watered_evening
       state: "off"
 
   action:
+    # Fetch the daily weather forecast.
+    # Uses weather.get_forecasts (HA 2024.8+) — the forecast attribute was removed.
+    - action: weather.get_forecasts
+      data:
+        type: daily
+      target:
+        entity_id: weather.home
+      response_variable: forecast_response
+
+    # 4. Stop if rain is forecast for today or tomorrow (stricter — sensor is absent)
+    - condition: template
+      value_template: >
+        {% set fc = forecast_response['weather.home'].forecast %}
+        {{ fc | length >= 2
+           and fc[0].condition not in ['rainy', 'pouring', 'lightning-rainy']
+           and fc[1].condition not in ['rainy', 'pouring', 'lightning-rainy'] }}
+
     # Notify that fallback mode is active.
     # Replace notify.notify with your device-specific service, e.g.
     # notify.mobile_app_<your_device_id>, if you want a push notification.
-    - service: notify.notify
+    - action: notify.notify
       data:
         message: >
           ⚠️ Soil sensor unavailable or stale — fallback evening watering active
 
     # Mark the evening window as used
-    - service: input_boolean.turn_on
+    - action: input_boolean.turn_on
       target:
         entity_id: input_boolean.garden_watered_evening
 
     # Open the valve
-    - service: switch.turn_on
+    - action: switch.turn_on
       target:
         entity_id: switch.water_timer
 
@@ -77,7 +74,7 @@
     - delay: "00:05:00"
 
     # Close the valve
-    - service: switch.turn_off
+    - action: switch.turn_off
       target:
         entity_id: switch.water_timer
 

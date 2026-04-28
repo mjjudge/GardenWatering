@@ -25,7 +25,7 @@
   action:
     # Replace notify.notify with your device-specific service, e.g.
     # notify.mobile_app_<your_device_id>, if you want a push notification.
-    - service: notify.notify
+    - action: notify.notify
       data:
         message: >
           ⚠️ Soil sensor unavailable or stale — fallback watering active
