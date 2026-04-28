@@ -1,0 +1,13 @@
+# input_boolean.yaml
+# ---------------------------------------------------------------------------
+# Tracks whether watering has already occurred in a given daily window.
+# Both flags are reset to 'off' at midnight by automation A7.
+# ---------------------------------------------------------------------------
+
+garden_watered_morning:
+  name: Garden Watered This Morning
+  icon: mdi:watering-can
+
+garden_watered_evening:
+  name: Garden Watered This Evening
+  icon: mdi:watering-can

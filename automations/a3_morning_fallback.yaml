@@ -1,0 +1,84 @@
+# A3 — Morning Fallback Watering (Sensor Failure Mode)
+# ---------------------------------------------------------------------------
+# Triggers at 06:00 when the soil sensor is unavailable or stale.
+# Uses stricter weather rules (no rain today OR tomorrow) and a shorter
+# 5-minute watering duration.  Generates an alert notification.
+# ---------------------------------------------------------------------------
+
+- id: a3_morning_fallback_watering
+  alias: "A3 — Morning Fallback Watering (Sensor Failure)"
+  description: >
+    Fallback morning watering when the soil sensor is unavailable or stale.
+    Uses stricter weather conditions and a shorter run time.
+
+  trigger:
+    - platform: time
+      at: "06:00:00"
+
+  condition:
+    # 1. Soil sensor is unavailable or stale (triggers fallback mode)
+    - condition: template
+      value_template: >
+        {% set s = states.sensor.soil_sensor_soil_moisture %}
+        {{ s is none
+           or s.state in ['unknown', 'unavailable', 'none']
+           or (now() - s.last_updated).total_seconds() > 21600 }}
+
+    # 2. No rain forecast for today (index 0)
+    - condition: template
+      value_template: >
+        {% set forecast = state_attr('weather.home', 'forecast') %}
+        {% if forecast is none or forecast | length < 1 %}
+          false
+        {% else %}
+          {{ forecast[0].condition not in ['rainy', 'pouring', 'lightning-rainy'] }}
+        {% endif %}
+
+    # 3. No rain forecast for tomorrow (index 1)
+    - condition: template
+      value_template: >
+        {% set forecast = state_attr('weather.home', 'forecast') %}
+        {% if forecast is none or forecast | length < 2 %}
+          false
+        {% else %}
+          {{ forecast[1].condition not in ['rainy', 'pouring', 'lightning-rainy'] }}
+        {% endif %}
+
+    # 4. Water timer battery is above minimum
+    - condition: numeric_state
+      entity_id: sensor.water_timer_battery
+      above: 20
+
+    # 5. Morning window has not already been used today
+    - condition: state
+      entity_id: input_boolean.garden_watered_morning
+      state: "off"
+
+  action:
+    # Notify that fallback mode is active.
+    # Replace notify.notify with your device-specific service, e.g.
+    # notify.mobile_app_<your_device_id>, if you want a push notification.
+    - service: notify.notify
+      data:
+        message: >
+          ⚠️ Soil sensor unavailable or stale — fallback morning watering active
+
+    # Mark the morning window as used
+    - service: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.garden_watered_morning
+
+    # Open the valve
+    - service: switch.turn_on
+      target:
+        entity_id: switch.water_timer
+
+    # Run for the shorter fallback duration (5 minutes)
+    - delay: "00:05:00"
+
+    # Close the valve
+    - service: switch.turn_off
+      target:
+        entity_id: switch.water_timer
+
+  mode: single

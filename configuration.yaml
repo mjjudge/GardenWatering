@@ -1,0 +1,18 @@
+# Garden Watering Automation — Home Assistant Configuration
+# ---------------------------------------------------------------------------
+# Include automations from the automations/ directory.
+# Input booleans track whether watering has already run in each daily window.
+# ---------------------------------------------------------------------------
+
+homeassistant:
+  name: Home
+
+# ---------------------------------------------------------------------------
+# Input booleans — run-tracking per watering window
+# ---------------------------------------------------------------------------
+input_boolean: !include input_boolean.yaml
+
+# ---------------------------------------------------------------------------
+# Automations — each file covers one automation
+# ---------------------------------------------------------------------------
+automation: !include_dir_merge_list automations/
